@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Callout</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1C2A3A;
+            color: #FFFFFF;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .callout {
+            display: flex;
+            align-items: center;
+            background-color: #28394E;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            width: 90%;
+            max-width: 600px;
+            box-sizing: border-box;
+        }
+        .icon {
+            flex-shrink: 0;
+            margin-right: 20px;
+        }
+        .icon svg {
+            width: 32px;
+            height: 32px;
+        }
+        .content {
+            flex-grow: 1;
+        }
+        .title {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            font-size: 0.9em;
+            color: #9FB3C8;
+        }
+        .cta-button {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 15px;
+            background-color: #FFC928;
+            color: #000000;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="callout">
+        <div class="icon" id="icon-container">
+            <!-- Icon will be inserted here -->
+        </div>
+        <div class="content">
+            <div class="title" id="title-container"></div>
+            <div class="subtitle" id="subtitle-container"></div>
+            <div id="cta-container"></div>
+        </div>
+    </div>
+
+    <script>
+        const ICONS = {
+            warning: `<svg fill="#F9B52A" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.216 3.001-1.742 3.001H4.42c-1.526 0-2.492-1.667-1.742-3.001l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>`,
+            insight: `<svg fill="#509EE3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 2a1 1 0 011 1v1.017a4.985 4.985 0 014.22 5.099 5.003 5.003 0 01-3.22 4.675V17a1 1 0 11-2 0v-3.21a5.002 5.002 0 01-5-4.783V3a1 1 0 011-1zm3 12.375A3.001 3.001 0 0015 10c0-1.598-1.24-2.9-2.824-2.995L12 7.002v.003a3 3 0 00-2 2.995c0 1.657 1.343 3 3 3z"></path></svg>`,
+            info: `<svg fill="#509EE3" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>`
+        };
+
+        const params = new URLSearchParams(window.location.search);
+        const title = params.get('title');
+        const subtitle = params.get('subtitle');
+        const icon = params.get('icon');
+        const cta = params.get('cta');
+        const cta_text = params.get('cta_text') || 'Read more';
+
+        if (title) {
+            document.getElementById('title-container').innerHTML = title;
+        }
+        if (subtitle) {
+            document.getElementById('subtitle-container').innerHTML = subtitle;
+        }
+        
+        document.getElementById('icon-container').innerHTML = ICONS[icon] || ICONS['info'];
+
+        if (cta) {
+            const ctaLink = document.createElement('a');
+            ctaLink.href = cta;
+            ctaLink.textContent = cta_text;
+            ctaLink.className = 'cta-button';
+            ctaLink.target = '_blank';
+            document.getElementById('cta-container').appendChild(ctaLink);
+        }
+    </script>
+</body>
+</html>
