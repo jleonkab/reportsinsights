@@ -1,0 +1,17 @@
+[
+    {
+      "slug": "funnel",
+      "title": "Funnel de Reservas",
+      "category": "Marketing"
+    },
+    {
+      "slug": "ventas-mensuales",
+      "title": "Ventas Mensuales",
+      "category": "Finanzas"
+    },
+    {
+      "slug": "cancelaciones",
+      "title": "Tasa de Cancelación",
+      "category": "Operaciones"
+    }
+  ]

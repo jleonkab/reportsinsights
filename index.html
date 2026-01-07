@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Docs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        // Paleta Metabase "Night Mode" aproximada
+                        mb: {
+                            bg: '#1F292E',       // Fondo principal
+                            sidebar: '#161C20',  // Fondo sidebar
+                            card: '#29343B',     // Fondo tarjetas/paneles
+                            border: '#3D4954',   // Bordes
+                            text: '#C1C9D2',     // Texto principal
+                            muted: '#788693',    // Texto secundario
+                            brand: '#509EE3',    // Azul Metabase
+                            success: '#82C766',
+                            danger: '#EF6E68',
+                            warning: '#F9CF48'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Lato', 'Inter', 'sans-serif'], // Metabase usa Lato
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #1F292E; color: #C1C9D2; }
+        
+        /* Scrollbars estilo Metabase */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #161C20; }
+        ::-webkit-scrollbar-thumb { background: #3D4954; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #509EE3; }
+
+        .fade-enter { opacity: 0; transform: translateY(10px); }
+        .fade-enter-active { opacity: 1; transform: translateY(0); transition: opacity 0.3s, transform 0.3s; }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden antialiased selection:bg-mb-brand selection:text-white">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-mb-sidebar border-r border-mb-border flex flex-col flex-shrink-0 z-20">
+        <div class="h-16 flex items-center px-6 border-b border-mb-border">
+            <span class="text-mb-brand font-black text-xl tracking-tight">METABASE<span class="text-white">DOCS</span></span>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto p-4 space-y-1" id="sidebar-nav">
+            <!-- Items del menú inyectados por JS -->
+            <div class="animate-pulse flex space-x-4">
+                <div class="flex-1 space-y-4 py-1">
+                    <div class="h-4 bg-mb-card rounded w-3/4"></div>
+                    <div class="h-4 bg-mb-card rounded"></div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="p-4 border-t border-mb-border text-xs text-mb-muted text-center">
+            Docs Viewer v2.0
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col min-w-0 bg-mb-bg overflow-hidden relative">
+        <!-- Topbar simulada (Breadcrumbs) -->
+        <header class="h-16 border-b border-mb-border flex items-center px-8 bg-mb-bg z-10">
+            <div class="flex items-center text-sm text-mb-muted" id="breadcrumbs">
+                <span>Inicio</span>
+            </div>
+        </header>
+
+        <!-- Scrollable Area -->
+        <div class="flex-1 overflow-y-auto p-8 relative" id="content-scroll">
+            <div id="content-area" class="max-w-5xl mx-auto pb-20">
+                <!-- El contenido JSON se renderiza aquí -->
+                <div class="text-center mt-20 text-mb-muted">
+                    <p>Selecciona una sección del menú para comenzar.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- JS APP LOGIC -->
+    <script>
+        const DOM = {
+            nav: document.getElementById('sidebar-nav'),
+            content: document.getElementById('content-area'),
+            breadcrumbs: document.getElementById('breadcrumbs'),
+            scroll: document.getElementById('content-scroll')
+        };
+
+        // --- 1. ROUTER & STATE ---
+        const Router = {
+            manifest: [],
+            
+            async init() {
+                try {
+                    // Cargar el "índice maestro"
+                    const response = await fetch('data/manifest.json');
+                    if (!response.ok) throw new Error('No se pudo cargar el manifest');
+                    this.manifest = await response.json();
+                    
+                    this.renderSidebar();
+                    this.handleInitialRoute();
+                    
+                    // Escuchar navegación del navegador (atrás/adelante)
+                    window.addEventListener('popstate', () => this.handleInitialRoute());
+                } catch (err) {
+                    console.error(err);
+                    DOM.nav.innerHTML = `<div class="text-red-400 text-sm p-2">Error cargando índice: ${err.message}</div>`;
+                }
+            },
+
+            renderSidebar() {
+                DOM.nav.innerHTML = this.manifest.map(item => `
+                    <button onclick="Router.navigate('${item.slug}')" 
+                            class="w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors group
+                                   ${this.getCurrentSlug() === item.slug ? 'bg-mb-brand text-white' : 'text-mb-text hover:bg-mb-card hover:text-white'}">
+                        <span class="truncate">${item.title}</span>
+                    </button>
+                `).join('');
+            },
+
+            getCurrentSlug() {
+                const params = new URLSearchParams(window.location.search);
+                return params.get('page');
+            },
+
+            async navigate(slug) {
+                // Actualizar URL sin recargar
+                const url = new URL(window.location);
+                url.searchParams.set('page', slug);
+                window.history.pushState({}, '', url);
+                
+                // Actualizar UI
+                this.renderSidebar();
+                await this.loadPage(slug);
+            },
+
+            handleInitialRoute() {
+                const slug = this.getCurrentSlug();
+                if (slug) {
+                    this.loadPage(slug);
+                } else if (this.manifest.length > 0) {
+                    // Opcional: Cargar el primero por defecto
+                    // this.navigate(this.manifest[0].slug);
+                }
+            },
+
+            async loadPage(slug) {
+                // Estado de carga
+                DOM.content.innerHTML = `
+                    <div class="flex justify-center items-center h-64">
+                        <svg class="animate-spin h-8 w-8 text-mb-brand" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                `;
+
+                try {
+                    const response = await fetch(`data/${slug}.json`);
+                    if (!response.ok) throw new Error('Sección no encontrada');
+                    const data = await response.json();
+                    
+                    Renderer.render(data);
+                    DOM.scroll.scrollTop = 0; // Reset scroll
+                } catch (err) {
+                    DOM.content.innerHTML = `
+                        <div class="p-4 bg-red-900/20 border border-red-900/50 rounded text-red-200">
+                            <h3 class="font-bold">Error 404</h3>
+                            <p>No se encontró el archivo de datos para: ${slug}</p>
+                        </div>
+                    `;
+                }
+            }
+        };
+
+        // --- 2. RENDERER (JSON -> HTML) ---
+        const Renderer = {
+            render(data) {
+                // Breadcrumbs
+                DOM.breadcrumbs.innerHTML = `
+                    <span class="text-mb-muted cursor-pointer hover:text-white" onclick="Router.navigate('')">Docs</span>
+                    <svg class="w-4 h-4 mx-2 text-mb-border" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <span class="text-white font-medium">${data.title}</span>
+                `;
+
+                // Contenido Principal
+                let html = `
+                    <div class="fade-enter fade-enter-active">
+                        <h1 class="text-3xl font-bold text-white mb-2">${data.title}</h1>
+                        ${data.description ? `<p class="text-lg text-mb-muted mb-8">${data.description}</p>` : ''}
+                        
+                        <div class="space-y-12">
+                `;
+
+                // Iterar sobre secciones
+                if (data.sections) {
+                    html += data.sections.map(section => this.renderSection(section)).join('');
+                }
+
+                html += `</div></div>`;
+                
+                // Footer con metadata
+                if (data.meta) {
+                    html += `
+                        <div class="mt-16 pt-8 border-t border-mb-border text-xs text-mb-muted flex justify-between">
+                            <span>Última actualización: ${data.meta.last_updated}</span>
+                            <span>Autor: ${data.meta.author}</span>
+                        </div>
+                    `;
+                }
+
+                DOM.content.innerHTML = html;
+            },
+
+            renderSection(section) {
+                // Detectar tipo de sección o renderizado genérico
+                let contentHtml = '';
+
+                // Si tiene imagen
+                if (section.image) {
+                    contentHtml += `
+                        <div class="mb-6 bg-mb-card border border-mb-border rounded-lg p-2 shadow-lg">
+                            <img src="static/${section.image}" 
+                                 alt="${section.title}" 
+                                 class="w-full h-auto rounded bg-mb-bg"
+                                 onerror="this.src='https://placehold.co/800x400/29343B/white?text=Imagen+No+Encontrada'">
+                        </div>
+                    `;
+                }
+
+                // Si tiene métricas (KPIs)
+                if (section.kpis) {
+                    contentHtml += `
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            ${section.kpis.map(kpi => `
+                                <div class="bg-mb-card p-4 rounded border border-mb-border">
+                                    <div class="text-xs text-mb-muted uppercase font-bold tracking-wider mb-1">${kpi.label}</div>
+                                    <div class="text-2xl font-bold text-white ${kpi.color ? `text-${kpi.color}-400` : ''}">${kpi.value}</div>
+                                    ${kpi.sub ? `<div class="text-xs text-mb-muted mt-1">${kpi.sub}</div>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                // Contenido de texto (soporta HTML básico en el JSON)
+                if (section.content) {
+                    contentHtml += `<div class="prose prose-invert prose-blue max-w-none text-mb-text leading-relaxed">
+                        ${section.content}
+                    </div>`;
+                }
+
+                // Subsecciones recursivas
+                let subHtml = '';
+                if (section.subsections) {
+                    subHtml = `<div class="mt-6 pl-6 border-l-2 border-mb-border space-y-6">
+                        ${section.subsections.map(sub => `
+                            <div>
+                                <h4 class="text-lg font-bold text-white mb-2">${sub.title}</h4>
+                                <div class="text-mb-muted text-sm">${sub.content}</div>
+                            </div>
+                        `).join('')}
+                    </div>`;
+                }
+
+                return `
+                    <section class="scroll-mt-20">
+                        ${section.title ? `<h2 class="text-xl font-bold text-white mb-4 flex items-center">
+                            <span class="w-2 h-2 bg-mb-brand rounded-full mr-3"></span>
+                            ${section.title}
+                        </h2>` : ''}
+                        ${contentHtml}
+                        ${subHtml}
+                    </section>
+                `;
+            }
+        };
+
+        // Iniciar
+        Router.init();
+
+    </script>
+</body>
+</html>

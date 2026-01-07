@@ -1,0 +1,55 @@
+{
+    "title": "Análisis del Funnel de Reservas",
+    "description": "Desglose detallado del comportamiento del usuario desde la apertura del motor hasta la confirmación.",
+    "meta": {
+      "last_updated": "24 Oct 2024",
+      "author": "Equipo de Datos"
+    },
+    "sections": [
+      {
+        "title": "Visión General del Embudo",
+        "image": "funnel.png",
+        "content": "<p>El gráfico muestra una caída pronunciada en la segunda etapa. Esto es característico de los motores de reserva donde la disponibilidad actúa como un filtro duro.</p>"
+      },
+      {
+        "title": "Métricas Clave",
+        "kpis": [
+          {
+            "label": "Tráfico Total",
+            "value": "4.5M",
+            "sub": "Sesiones iniciadas"
+          },
+          {
+            "label": "Conversión Final",
+            "value": "17.22%",
+            "sub": "Objetivo: 20%",
+            "color": "emerald" 
+          },
+          {
+            "label": "Drop-off Crítico",
+            "value": "55%",
+            "sub": "En paso de disponibilidad",
+            "color": "red"
+          }
+        ]
+      },
+      {
+        "title": "Análisis Paso a Paso",
+        "content": "<p>A continuación detallamos las razones cualitativas detrás de cada caída.</p>",
+        "subsections": [
+          {
+            "title": "Paso 1 → 2: La Curiosidad",
+            "content": "Muchos usuarios abren el motor solo para ver precios ('Window Shoppers'). Esta caída del 36% es fisiológica y saludable."
+          },
+          {
+            "title": "Paso 2 → 3: Disponibilidad",
+            "content": "El sistema rechaza la petición por falta de mesas. Aquí es donde perdemos la mayor oportunidad de venta."
+          },
+          {
+            "title": "Paso 3 → 4: Fricción de Pago",
+            "content": "Abandono en el formulario de tarjeta de crédito. Simplificar los campos podría mejorar esto."
+          }
+        ]
+      }
+    ]
+  }
